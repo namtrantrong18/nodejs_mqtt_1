@@ -5,6 +5,8 @@ dotenv.config({ path: path.join(__dirname, '.env') });
 const express = require('express');
 var session = require('express-session');
 var Pusher = require('pusher');
+var bodyParser = require('body-parser');
+
 
 // connect db mysql
 const db = require('./app/models');
@@ -37,6 +39,11 @@ function initial() {
 
 const app = express();
 const port_server = process.env.PORT_SERVER;
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 
 app.use(
     session({
@@ -321,3 +328,26 @@ app.get('/addDataSensor', function (req, res) {
             res.send({ success: false, errorMessage: 'Invalid Query Paramaters, required - temperature & time.' });
         })
 });
+
+// connect MQTT
+const mqtt = require('mqtt')
+const client1 = mqtt.connect('mqtt://broker.hivemq.com')
+
+const topic_pub1 = '/abc/lamp'
+
+// make api
+app.post('/dashboard/controller/lamp', (req,res) => {
+
+    let mode = req.body.lamp_mode;
+    // public to MQTT Broker
+    client1.publish(topic_pub1, mode);
+    console.log(mode)
+})
+
+app.post('/dashboard/controller/lamp_timer', (req,res) => {
+
+    let mode = req.body;
+    // public to MQTT Broker
+    client1.publish(topic_pub1, mode);
+    console.log(mode)
+})
